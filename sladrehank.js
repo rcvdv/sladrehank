@@ -10,7 +10,7 @@ Sladrehank = function () {
 	autoBlockerConfiguration = () =>
 		"__ucCmp" in window
 			? `https://storage.googleapis.com/uc-${
-				__ucCmp.cmpController.coreData.sandbox ? "dev" : "prod"
+					__ucCmp.cmpController.coreData.sandbox ? "dev" : "prod"
 			  }-auto-blocker-config/${getSettingsId()}/${encodeURI(
 					window.location.hostname
 			  )}`
@@ -35,7 +35,7 @@ Sladrehank = function () {
 		cmpVersions = [
 			null,
 			/app\.usercentrics\.eu\/[\d.a-z]+\/main\.js/,
-			/app\.usercentrics\.eu\/browser-ui\/[\d.a-z]+\/loader\.js/,
+			/app\.usercentrics\.eu\/browser-ui\/[\d.a-z]+\/(loader|bundle_legacy)\.js/,
 			/web\.cmp\.usercentrics(-sandbox)?\.eu\/ui\/loader\.js/,
 		],
 		configLink = `https://v1.api.service.cmp.usercentrics.eu/latest/autoblocker/${getSettingsId()}?domain=${domain}`,
@@ -52,7 +52,6 @@ Sladrehank = function () {
 
 	(function autoBlockingInstructions() {
 		if (!autoBlockingEnabled || !isOneCMP()) return;
-		
 	})();
 
 	(function checkEmbedValues(d) {
@@ -244,14 +243,18 @@ Sladrehank = function () {
 
 	function identifyUcCmpScript() {
 		let cmpScript = undefined;
-		document.querySelectorAll("script[src*='usercentrics.eu']").forEach((e) => {
-			if (
-				cmpVersions[1].test(e.src) ||
-				cmpVersions[2].test(e.src) ||
-				cmpVersions[3].test(e.src)
+		document
+			.querySelectorAll(
+				"script[src*='usercentrics.eu'], script[src*='usercentrics-sandbox.eu']"
 			)
-				cmpScript = e;
-		});
+			.forEach((e) => {
+				if (
+					cmpVersions[1].test(e.src) ||
+					cmpVersions[2].test(e.src) ||
+					cmpVersions[3].test(e.src)
+				)
+					cmpScript = e;
+			});
 		return cmpScript;
 	}
 
@@ -315,7 +318,7 @@ Sladrehank = function () {
 
 	if (autoBlockerScript && !isOneCMP())
 		issues.push(
-			"Auto blocking script is implemented, but this is not ONE CMP."
+			"Auto blocking script is implemented, but not supported in this version of Usercentrics CMP."
 		);
 
 	console.info(
@@ -343,7 +346,9 @@ Sladrehank = function () {
 			};`,
 			autoBlockingEnabled ? "EN" : "DIS",
 			"font-size: 1em",
-			autoBlockingEnabled ? `\nAuto blocking instructions: ${autoBlockerConfiguration()}` : ""
+			autoBlockingEnabled
+				? `\nAuto blocking instructions: ${autoBlockerConfiguration()}`
+				: ""
 		);
 
 	if ("UC_UI_SUPPRESS_CMP_DISPLAY" in window)
