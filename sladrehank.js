@@ -209,7 +209,7 @@ Sladrehank = function () {
 		for (let i of document.scripts)
 			if (
 				i.src &&
-				/privacy-proxy\.usercentrics\.eu\/latest\/uc-block\.bundle\.js$/.test(
+				/privacy-proxy\.usercentrics\.eu\/(latest|legacy)\/uc-block\.bundle\.js$/.test(
 					i.src
 				)
 			)
