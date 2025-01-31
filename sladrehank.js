@@ -35,7 +35,7 @@ Sladrehank = function () {
 		cmpVersions = [
 			null,
 			/app\.usercentrics\.eu\/[\d.a-z]+\/main\.js/,
-			/app\.usercentrics\.eu\/browser-ui\/[\d.a-z]+\/(loader|bundle_legacy)\.js/,
+			/app\.usercentrics\.eu\/browser-ui\/[\d.a-z]+\/(loader|bundle(_legacy)?)\.js/,
 			/web\.cmp\.usercentrics(-sandbox)?\.eu\/ui\/loader\.js/,
 		],
 		configLink = `https://v1.api.service.cmp.usercentrics.eu/latest/autoblocker/${getSettingsId()}?domain=${domain}`,
@@ -209,7 +209,7 @@ Sladrehank = function () {
 		for (let i of document.scripts)
 			if (
 				i.src &&
-				/privacy-proxy\.usercentrics\.eu\/(latest|legacy)\/uc-block\.bundle\.js$/.test(
+				/privacy-proxy\.usercentrics\.eu\/(legacy|latest)\/uc-block\.bundle\.js$/.test(
 					i.src
 				)
 			)
@@ -268,36 +268,23 @@ Sladrehank = function () {
 			);
 	}
 
-	(function tcfEnabledThroughCmp() {
+	function tcfEnabledThroughCmp() {
 		if (!tcfEnabled) return;
 		let enabledThroughCmp = false;
-		switch (cmpVersion) {
-			case 2:
-				if (
-					document
-						.querySelector(
-							"script[src$='app.usercentrics.eu/browser-ui/latest/loader.js']"
-						)
-						.hasAttribute("data-tcf-enabled")
-				)
-					enabledThroughCmp = true;
-				break;
-			case 3:
-				if (
-					document.querySelector(
-						"script[src='https://web.cmp.usercentrics.eu/tcf/stub.js'"
-					)
-				)
-					enabledThroughCmp = true;
-				break;
-			default:
-				break;
-		}
+		console.log(identifyUcCmpScript().dataset);
+		if (identifyUcCmpScript().dataset["tcfEnabled"] != undefined)
+			enabledThroughCmp = true;
+		if (
+			document.querySelector(
+				"script[src='https://web.cmp.usercentrics.eu/tcf/stub.js'"
+			)
+		)
+			enabledThroughCmp = true;
 		if (!enabledThroughCmp)
 			issues.push(
-				"TCF is enabled, but not through the CMP. The CMP won't e bale to create a tcString."
+				"TCF is enabled, but not through the CMP. The CMP won't be able to create a tcString."
 			);
-	})();
+	}
 
 	confirm("Do you want to clear the console?") && console.clear();
 	console.info("%c ", `background-image: ${UsercentricsLogo}`);
@@ -356,6 +343,7 @@ Sladrehank = function () {
 
 	listDataProcessingServices();
 	printElementsBlockedPriorConsent();
+	tcfEnabledThroughCmp();
 
 	(function checkLoadingSequence() {
 		let xhttp = new XMLHttpRequest();
