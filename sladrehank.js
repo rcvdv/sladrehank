@@ -39,6 +39,9 @@ Sladrehank = function () {
 			/web\.cmp\.usercentrics(-sandbox)?\.eu\/ui\/loader\.js/,
 		],
 		configLink = `https://v1.api.service.cmp.usercentrics.eu/latest/autoblocker/${getSettingsId()}?domain=${domain}`,
+		gtmLogo =
+			"url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAOxAAADsQBlSsOGwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAG3SURBVDiNjZO/TxNxGMY/z92RS0xqExNcNNE/QBf/A49N7ECktCSVxckYxkICjq1DHUmcTaQ0BaIm6Ng4Ozo5ODEwsKD1Ilp7d69DgV7Pq/EZn+/7fL7v+/0hpqje/vF4tuhuAmam1fWS/zavzskzg0ZYLlxyXgDXgOuS7bUOBpX/AgSNsIy0A0rbHrLtPMgEYK4ZVkdhvM9HMWYTtbmQC0DQCMuGXgEewHHf+HSYJECcgbSfv/tZmwCM2x6FzxQff0tWzFQFopTvGnp5DlHQOF1AyR7gpooimdV6TwtdgNbBoIJsO7NBZKayg5Ktf4UB1kp+F1NNmXEk23IMEjLK83CIMjcDwhxMq5kZPaR20DhdODda7wcPMOsY5k7maQpg7lm4aKZOZsahSYv3bnuuybrATGotlrRSn/d3LnqaAonu3HTtalETYaSHa/N+56yLse42wyWhNuD9+j3gJOwjieDWFW7M+qOuUHX9vv96fDQpfdgs7Eq2DEQn3/tEccwwivj45SvAUKZKOvwXAKC3UdiXbNkYv2NLzMy0VC/5b7L1ub+xt1HY952ZJ8AR4rB42X007Tv/AbzCufutmD3AAAAAAElFTkSuQmCC');" +
+			"background-repeat:no-repeat;padding-right:16px;padding-bottom:3px;",
 		issues = [],
 		messageColor = { error: "EE0000", ok: "00CC00", warning: "FFA500" },
 		smartDataProtector = checkSmartDataProtector(),
@@ -268,6 +271,44 @@ Sladrehank = function () {
 			);
 	}
 
+	function reportGoogleConsentModeSettings() {
+		l = (s) => (s == undefined ? "" : s ? "granted" : "denied");
+		c = (s) => (s == "granted" ? "color: #0C0" : "color: #C00");
+		if (!window["google_tag_data"]) return;
+		var g = "ics" in google_tag_data ? google_tag_data.ics.entries : null,
+			i = "",
+			t = "%c" + " Google Consent Mode settings:",
+			u = "";
+		if (!g)
+			issues.push(
+				"Google Tag Manager is implemented, but Consent Mode data wasn't found."
+			);
+		console.groupCollapsed(t, "font-weight: 700");
+		for (var a in g) {
+			i = l(g[a]["default"]);
+			u = l(g[a]["update"]);
+			if (i == "" && u == "") continue;
+			t =
+				"\t" +
+				a +
+				":" +
+				(i != "" ? "\n\t\tDefault: %c" + i : "%c") +
+				"%c" +
+				(u != "" ? "\n\t\tUpdate: %c" + u : "%c");
+			console.log(t, i != "" ? c(i) : "", "", u != "" ? c(u) : "", "");
+		}
+		console.groupEnd();
+	}
+
+	function reportGtm() {
+		console.info(
+			"%c %cGoogle Tag Manager%c detected",
+			`background-image: ${gtmLogo}`,
+			"color:#5F6368;font-weight:700;font-size:10pt;",
+			""
+		);
+	}
+
 	function tcfEnabledThroughCmp() {
 		if (!tcfEnabled) return;
 		let enabledThroughCmp = false;
@@ -338,6 +379,11 @@ Sladrehank = function () {
 				: ""
 		);
 
+	if ("google_tag_manager" in window) {
+		reportGtm();
+		reportGoogleConsentModeSettings();
+	}
+
 	if ("UC_UI_SUPPRESS_CMP_DISPLAY" in window)
 		issues.push("Banner supressed with %cUC_UI_SUPPRESS_CMP_DISPLAY=true");
 
@@ -363,6 +409,10 @@ Sladrehank = function () {
 				if (!/\.usercentrics\.eu\//.test(scripts[i]))
 					if (i < ucIndex || ucIndex === -1) loadedBefore++;
 			}
+			if (ucIndex === -1)
+				issues.push(
+					"Usercentrics CMP is not present in the source code, it's likely loaded via a 3rd party service."
+				);
 			if (autoBlockingEnabled && isOneCMP() && loadedBefore > 0 && ucIndex > -1)
 				issues.push(
 					`The Auto Blocking script is not implemented optimally, (${loadedBefore} script${
