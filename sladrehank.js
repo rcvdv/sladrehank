@@ -159,6 +159,28 @@ Sladrehank = function () {
 		if (str !== "") issues.push(str);
 	})();
 
+	this.help = function () {
+		const methods = {
+				"Sladrehank.listDataProcessingServices()": {
+					description: "Lists denied and accepted Data Processing services.",
+				},
+				"Sladrehank.reportGoogleConsentModeSettings()": {
+					description: "Reports Google Consent Mode data",
+				},
+			},
+			properties = {
+				"Sladrehank.ucCmpScript": {
+					description: "Returns the Usercentrics script element.",
+				},
+			};
+		console.group("Sladrehank methods:");
+		console.table(methods);
+		console.groupEnd();
+		console.group("Sladrehank properties:");
+		console.table(properties);
+		console.groupEnd();
+	};
+
 	function list(array, header) {
 		const odd = ucBrandColor,
 			even = "#CC977D";
@@ -168,7 +190,7 @@ Sladrehank = function () {
 		console.groupEnd();
 	}
 
-	function listDataProcessingServices() {
+	this.listDataProcessingServices = function () {
 		if (!window["__ucCmp"] && !window["UC_UI"]) return;
 		if (window["UC_UI"] && !window["__ucCmp"]) {
 			console.groupCollapsed("Data Processing Services");
@@ -191,7 +213,7 @@ Sladrehank = function () {
 			);
 		}
 		console.groupEnd();
-	}
+	};
 
 	function listPotentialIssues() {
 		if (issues.length > 0) {
@@ -271,15 +293,17 @@ Sladrehank = function () {
 			);
 	}
 
-	function reportGoogleConsentModeSettings() {
+	this.reportGoogleConsentModeSettings = function (a) {
 		l = (s) => (s == undefined ? "" : s ? "granted" : "denied");
 		c = (s) => (s == "granted" ? "color: #0C0" : "color: #C00");
+		if (!window["google_tag_data"] && !a)
+			console.warn("No Google Consent Mode data found.");
 		if (!window["google_tag_data"]) return;
 		var g = "ics" in google_tag_data ? google_tag_data.ics.entries : null,
 			i = "",
 			t = "%c" + " Google Consent Mode settings:",
 			u = "";
-		if (!g)
+		if (a && !g)
 			issues.push(
 				"Google Tag Manager is implemented, but Consent Mode data wasn't found."
 			);
@@ -298,7 +322,7 @@ Sladrehank = function () {
 			console.log(t, i != "" ? c(i) : "", "", u != "" ? c(u) : "", "");
 		}
 		console.groupEnd();
-	}
+	};
 
 	function reportGtm() {
 		console.info(
@@ -328,6 +352,9 @@ Sladrehank = function () {
 	}
 
 	confirm("Do you want to clear the console?") && console.clear();
+	console.warn(
+		"Use Sladrehank.help() to view available methods and properties."
+	);
 	console.info("%c ", `background-image: ${UsercentricsLogo}`);
 	if (this.ucCmpScript === null || this.ucCmpScript === undefined) {
 		console.warn("No Usercentrics CMP script found");
@@ -381,13 +408,13 @@ Sladrehank = function () {
 
 	if ("google_tag_manager" in window) {
 		reportGtm();
-		reportGoogleConsentModeSettings();
+		this.reportGoogleConsentModeSettings(!0);
 	}
 
 	if ("UC_UI_SUPPRESS_CMP_DISPLAY" in window)
 		issues.push("Banner supressed with %cUC_UI_SUPPRESS_CMP_DISPLAY=true");
 
-	listDataProcessingServices();
+	this.listDataProcessingServices();
 	printElementsBlockedPriorConsent();
 	tcfEnabledThroughCmp();
 
